@@ -288,13 +288,14 @@ def initialize_datadir(dirname, n):
     if not os.path.isdir(datadir):
         os.makedirs(datadir)
     rpc_u, rpc_p = rpc_auth_pair(n)
-    with open(os.path.join(datadir, "pivx.conf"), 'w', encoding='utf8') as f:
+    with open(os.path.join(datadir, "xchainz.conf"), 'w', encoding='utf8') as f:
         f.write("regtest=1\n")
         f.write("rpcuser=" + rpc_u + "\n")
         f.write("rpcpassword=" + rpc_p + "\n")
         f.write("port=" + str(p2p_port(n)) + "\n")
         f.write("rpcport=" + str(rpc_port(n)) + "\n")
         f.write("listenonion=0\n")
+        f.write("litemode=1\n")
         f.write("enablezeromint=0\n")
         f.write("precompute=0\n")
         f.write("staking=0\n")
@@ -310,8 +311,8 @@ def get_datadir_path(dirname, n):
 def get_auth_cookie(datadir):
     user = None
     password = None
-    if os.path.isfile(os.path.join(datadir, "pivx.conf")):
-        with open(os.path.join(datadir, "pivx.conf"), 'r', encoding='utf8') as f:
+    if os.path.isfile(os.path.join(datadir, "xchainz.conf")):
+        with open(os.path.join(datadir, "xchainz.conf"), 'r', encoding='utf8') as f:
             for line in f:
                 if line.startswith("rpcuser="):
                     assert user is None  # Ensure that there is only one rpcuser line

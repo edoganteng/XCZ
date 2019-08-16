@@ -1,6 +1,7 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2013 The Bitcoin developers
 // Copyright (c) 2016-2019 The PIVX developers
+// Copyright (c) 2019 The XChainZ developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -11,10 +12,10 @@
 #include "wallet/db.h"
 #include "key.h"
 #include "keystore.h"
-#include "zpiv/zerocoin.h"
+#include "zxcz/zerocoin.h"
 #include "libzerocoin/Accumulator.h"
 #include "libzerocoin/Denominations.h"
-#include "zpiv/zpivtracker.h"
+#include "zxcz/zxcztracker.h"
 
 #include <list>
 #include <stdint.h>
@@ -179,19 +180,19 @@ public:
     bool ReadZerocoinSpendSerialEntry(const CBigNum& bnSerial);
     bool WriteCurrentSeedHash(const uint256& hashSeed);
     bool ReadCurrentSeedHash(uint256& hashSeed);
-    bool WriteZPIVSeed(const uint256& hashSeed, const std::vector<unsigned char>& seed);
-    bool ReadZPIVSeed(const uint256& hashSeed, std::vector<unsigned char>& seed);
-    bool ReadZPIVSeed_deprecated(uint256& seed);
-    bool EraseZPIVSeed();
-    bool EraseZPIVSeed_deprecated();
+    bool WriteZXCZSeed(const uint256& hashSeed, const vector<unsigned char>& seed);
+    bool ReadZXCZSeed(const uint256& hashSeed, vector<unsigned char>& seed);
+    bool ReadZXCZSeed_deprecated(uint256& seed);
+    bool EraseZXCZSeed();
+    bool EraseZXCZSeed_deprecated();
 
-    bool WriteZPIVCount(const uint32_t& nCount);
-    bool ReadZPIVCount(uint32_t& nCount);
-    std::map<uint256, std::vector<std::pair<uint256, uint32_t> > > MapMintPool();
+    bool WriteZXCZCount(const uint32_t& nCount);
+    bool ReadZXCZCount(uint32_t& nCount);
+    std::map<uint256, std::vector<pair<uint256, uint32_t> > > MapMintPool();
     bool WriteMintPoolPair(const uint256& hashMasterSeed, const uint256& hashPubcoin, const uint32_t& nCount);
 
-    void LoadPrecomputes(std::list<std::pair<uint256, CoinWitnessCacheData> >& itemList, std::map<uint256, std::list<std::pair<uint256, CoinWitnessCacheData> >::iterator>& itemMap);
-    void LoadPrecomputes(std::set<uint256> setHashes);
+    void LoadPrecomputes(std::list<std::pair<uint256, CoinWitnessCacheData> >& itemList, std::map<uint256, list<std::pair<uint256, CoinWitnessCacheData> >::iterator>& itemMap);
+    void LoadPrecomputes(set<uint256> setHashes);
     void EraseAllPrecomputes();
     bool WritePrecompute(const uint256& hash, const CoinWitnessCacheData& data);
     bool ReadPrecompute(const uint256& hash, CoinWitnessCacheData& data);
@@ -204,7 +205,7 @@ private:
     bool WriteAccountingEntry(const uint64_t nAccEntryNum, const CAccountingEntry& acentry);
 };
 
-void NotifyBacked(const CWallet& wallet, bool fSuccess, std::string strMessage);
+void NotifyBacked(const CWallet& wallet, bool fSuccess, string strMessage);
 bool BackupWallet(const CWallet& wallet, const boost::filesystem::path& strDest, bool fEnableCustom = true);
 bool AttemptBackupWallet(const CWallet& wallet, const boost::filesystem::path& pathSrc, const boost::filesystem::path& pathDest);
 

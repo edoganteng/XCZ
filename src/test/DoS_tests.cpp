@@ -16,7 +16,7 @@
 #include "serialize.h"
 #include "util.h"
 
-#include "test/test_pivx.h"
+#include "test/test_xchainz.h"
 
 #include <stdint.h>
 

@@ -10,7 +10,7 @@
 #include "uint256.h"
 #include <string>
 #include "version.h"
-#include "test/test_pivx.h"
+#include "test/test_xchainz.h"
 
 BOOST_FIXTURE_TEST_SUITE(uint256_tests, BasicTestingSetup)
 
@@ -66,7 +66,7 @@ std::string ArrayToString(const unsigned char A[], unsigned int width)
 BOOST_AUTO_TEST_CASE( basics ) // constructors, equality, inequality
 {
     BOOST_CHECK(1 == 0+1);
-    // constructor uint256(std::vector<char>):
+    // constructor uint256(vector<char>):
     BOOST_CHECK(R1L.ToString() == ArrayToString(R1Array,32));
     BOOST_CHECK(R1S.ToString() == ArrayToString(R1Array,20));
     BOOST_CHECK(R2L.ToString() == ArrayToString(R2Array,32));

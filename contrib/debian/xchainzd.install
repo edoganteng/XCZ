@@ -1,0 +1,3 @@
+usr/local/bin/xchainzd usr/bin
+usr/local/bin/xchainz-cli usr/bin
+debian/examples/xchainz.conf etc/xchainz

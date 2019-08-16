@@ -2,6 +2,7 @@
 // Copyright (c) 2009-2014 The Bitcoin developers
 // Copyright (c) 2014-2015 The Dash developers
 // Copyright (c) 2015-2019 The PIVX developers
+// Copyright (c) 2019 The XChainZ developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -27,6 +28,8 @@
 
 #include <univalue.h>
 
+using namespace RPCServer;
+using namespace std;
 
 static bool fRPCRunning = false;
 static bool fRPCInWarmup = true;
@@ -68,7 +71,7 @@ void RPCServer::OnPostCommand(boost::function<void (const CRPCCommand&)> slot)
 }
 
 void RPCTypeCheck(const UniValue& params,
-                  const std::list<UniValue::VType>& typesExpected,
+                  const list<UniValue::VType>& typesExpected,
                   bool fAllowNull)
 {
     unsigned int i = 0;
@@ -78,7 +81,7 @@ void RPCTypeCheck(const UniValue& params,
 
         const UniValue& v = params[i];
         if (!((v.type() == t) || (fAllowNull && (v.isNull())))) {
-            std::string err = strprintf("Expected type %s, got %s",
+            string err = strprintf("Expected type %s, got %s",
                                    uvTypeName(t), uvTypeName(v.type()));
             throw JSONRPCError(RPC_TYPE_ERROR, err);
         }
@@ -87,16 +90,16 @@ void RPCTypeCheck(const UniValue& params,
 }
 
 void RPCTypeCheckObj(const UniValue& o,
-                  const std::map<std::string, UniValue::VType>& typesExpected,
+                  const map<string, UniValue::VType>& typesExpected,
                   bool fAllowNull)
 {
-    for (const PAIRTYPE(std::string, UniValue::VType)& t : typesExpected) {
+    for (const PAIRTYPE(string, UniValue::VType)& t : typesExpected) {
         const UniValue& v = find_value(o, t.first);
         if (!fAllowNull && v.isNull())
             throw JSONRPCError(RPC_TYPE_ERROR, strprintf("Missing %s", t.first));
 
         if (!((v.type() == t.second) || (fAllowNull && (v.isNull())))) {
-            std::string err = strprintf("Expected type %s for %s, got %s",
+            string err = strprintf("Expected type %s for %s, got %s",
                                    uvTypeName(t.second), t.first, uvTypeName(v.type()));
             throw JSONRPCError(RPC_TYPE_ERROR, err);
         }
@@ -114,7 +117,7 @@ CAmount AmountFromValue(const UniValue& value)
         throw JSONRPCError(RPC_TYPE_ERROR, "Amount is not a number");
 
     double dAmount = value.get_real();
-    if (dAmount <= 0.0 || dAmount > 21000000.0)
+    if (dAmount <= 0.0 || dAmount > 42000000.0)
         throw JSONRPCError(RPC_TYPE_ERROR, "Invalid amount");
     CAmount nAmount = roundint64(dAmount * COIN);
     if (!MoneyRange(nAmount))
@@ -145,25 +148,25 @@ uint256 ParseHashV(const UniValue& v, std::string strName)
     result.SetHex(strHex);
     return result;
 }
-uint256 ParseHashO(const UniValue& o, std::string strKey)
+uint256 ParseHashO(const UniValue& o, string strKey)
 {
     return ParseHashV(find_value(o, strKey), strKey);
 }
-std::vector<unsigned char> ParseHexV(const UniValue& v, std::string strName)
+vector<unsigned char> ParseHexV(const UniValue& v, string strName)
 {
-    std::string strHex;
+    string strHex;
     if (v.isStr())
         strHex = v.get_str();
     if (!IsHex(strHex))
         throw JSONRPCError(RPC_INVALID_PARAMETER, strName + " must be hexadecimal string (not '" + strHex + "')");
     return ParseHex(strHex);
 }
-std::vector<unsigned char> ParseHexO(const UniValue& o, std::string strKey)
+vector<unsigned char> ParseHexO(const UniValue& o, string strKey)
 {
     return ParseHexV(find_value(o, strKey), strKey);
 }
 
-int ParseInt(const UniValue& o, std::string strKey)
+int ParseInt(const UniValue& o, string strKey)
 {
     const UniValue& v = find_value(o, strKey);
     if (v.isNum())
@@ -172,7 +175,7 @@ int ParseInt(const UniValue& o, std::string strKey)
     return v.get_int();
 }
 
-bool ParseBool(const UniValue& o, std::string strKey)
+bool ParseBool(const UniValue& o, string strKey)
 {
     const UniValue& v = find_value(o, strKey);
     if (v.isBool())
@@ -186,22 +189,22 @@ bool ParseBool(const UniValue& o, std::string strKey)
  * Note: This interface may still be subject to change.
  */
 
-std::string CRPCTable::help(std::string strCommand) const
+string CRPCTable::help(string strCommand) const
 {
-    std::string strRet;
-    std::string category;
-    std::set<rpcfn_type> setDone;
-    std::vector<std::pair<std::string, const CRPCCommand*> > vCommands;
+    string strRet;
+    string category;
+    set<rpcfn_type> setDone;
+    vector<pair<string, const CRPCCommand*> > vCommands;
 
-    for (std::map<std::string, const CRPCCommand*>::const_iterator mi = mapCommands.begin(); mi != mapCommands.end(); ++mi)
-        vCommands.push_back(std::make_pair(mi->second->category + mi->first, mi->second));
-    std::sort(vCommands.begin(), vCommands.end());
+    for (map<string, const CRPCCommand*>::const_iterator mi = mapCommands.begin(); mi != mapCommands.end(); ++mi)
+        vCommands.push_back(make_pair(mi->second->category + mi->first, mi->second));
+    sort(vCommands.begin(), vCommands.end());
 
-    for (const PAIRTYPE(std::string, const CRPCCommand*) & command : vCommands) {
+    for (const PAIRTYPE(string, const CRPCCommand*) & command : vCommands) {
         const CRPCCommand* pcmd = command.second;
-        std::string strMethod = pcmd->name;
+        string strMethod = pcmd->name;
         // We already filter duplicates, but these deprecated screw up the sort order
-        if (strMethod.find("label") != std::string::npos)
+        if (strMethod.find("label") != string::npos)
             continue;
         if ((strCommand != "" || pcmd->category == "hidden") && strMethod != strCommand)
             continue;
@@ -217,16 +220,16 @@ std::string CRPCTable::help(std::string strCommand) const
                 (*pfn)(params, true);
         } catch (std::exception& e) {
             // Help text is returned in an exception
-            std::string strHelp = std::string(e.what());
+            string strHelp = string(e.what());
             if (strCommand == "") {
-                if (strHelp.find('\n') != std::string::npos)
+                if (strHelp.find('\n') != string::npos)
                     strHelp = strHelp.substr(0, strHelp.find('\n'));
 
                 if (category != pcmd->category) {
                     if (!category.empty())
                         strRet += "\n";
                     category = pcmd->category;
-                    std::string firstLetter = category.substr(0, 1);
+                    string firstLetter = category.substr(0, 1);
                     boost::to_upper(firstLetter);
                     strRet += "== " + firstLetter + category.substr(1) + " ==\n";
                 }
@@ -243,7 +246,7 @@ std::string CRPCTable::help(std::string strCommand) const
 UniValue help(const UniValue& params, bool fHelp)
 {
     if (fHelp || params.size() > 1)
-        throw std::runtime_error(
+        throw runtime_error(
             "help ( \"command\" )\n"
             "\nList all commands, or get help for a specified command.\n"
             "\nArguments:\n"
@@ -251,7 +254,7 @@ UniValue help(const UniValue& params, bool fHelp)
             "\nResult:\n"
             "\"text\"     (string) The help text\n");
 
-    std::string strCommand;
+    string strCommand;
     if (params.size() > 0)
         strCommand = params[0].get_str();
 
@@ -263,13 +266,13 @@ UniValue stop(const UniValue& params, bool fHelp)
 {
     // Accept the deprecated and ignored 'detach' boolean argument
     if (fHelp || params.size() > 1)
-        throw std::runtime_error(
+        throw runtime_error(
             "stop\n"
-            "\nStop PIVX server.");
+            "\nStop XChainZ server.");
     // Event loop will exit after current HTTP requests have been handled, so
     // this reply will get back to the client.
     StartShutdown();
-    return "PIVX server stopping";
+    return "XChainZ server stopping";
 }
 
 
@@ -362,35 +365,35 @@ static const CRPCCommand vRPCCommands[] =
         { "hidden",             "waitforblock",           &waitforblock,           true,  true,  false  },
         { "hidden",             "waitforblockheight",     &waitforblockheight,     true,  true,  false  },
 
-        /* PIVX features */
-        {"pivx", "listmasternodes", &listmasternodes, true, true, false},
-        {"pivx", "getmasternodecount", &getmasternodecount, true, true, false},
-        {"pivx", "masternodeconnect", &masternodeconnect, true, true, false},
-        {"pivx", "createmasternodebroadcast", &createmasternodebroadcast, true, true, false},
-        {"pivx", "decodemasternodebroadcast", &decodemasternodebroadcast, true, true, false},
-        {"pivx", "relaymasternodebroadcast", &relaymasternodebroadcast, true, true, false},
-        {"pivx", "masternodecurrent", &masternodecurrent, true, true, false},
-        {"pivx", "masternodedebug", &masternodedebug, true, true, false},
-        {"pivx", "startmasternode", &startmasternode, true, true, false},
-        {"pivx", "createmasternodekey", &createmasternodekey, true, true, false},
-        {"pivx", "getmasternodeoutputs", &getmasternodeoutputs, true, true, false},
-        {"pivx", "listmasternodeconf", &listmasternodeconf, true, true, false},
-        {"pivx", "getmasternodestatus", &getmasternodestatus, true, true, false},
-        {"pivx", "getmasternodewinners", &getmasternodewinners, true, true, false},
-        {"pivx", "getmasternodescores", &getmasternodescores, true, true, false},
-        {"pivx", "preparebudget", &preparebudget, true, true, false},
-        {"pivx", "submitbudget", &submitbudget, true, true, false},
-        {"pivx", "mnbudgetvote", &mnbudgetvote, true, true, false},
-        {"pivx", "getbudgetvotes", &getbudgetvotes, true, true, false},
-        {"pivx", "getnextsuperblock", &getnextsuperblock, true, true, false},
-        {"pivx", "getbudgetprojection", &getbudgetprojection, true, true, false},
-        {"pivx", "getbudgetinfo", &getbudgetinfo, true, true, false},
-        {"pivx", "mnbudgetrawvote", &mnbudgetrawvote, true, true, false},
-        {"pivx", "mnfinalbudget", &mnfinalbudget, true, true, false},
-        {"pivx", "checkbudgets", &checkbudgets, true, true, false},
-        {"pivx", "mnsync", &mnsync, true, true, false},
-        {"pivx", "spork", &spork, true, true, false},
-        {"pivx", "getpoolinfo", &getpoolinfo, true, true, false},
+        /* XChainZ features */
+        {"xchainz", "listmasternodes", &listmasternodes, true, true, false},
+        {"xchainz", "getmasternodecount", &getmasternodecount, true, true, false},
+        {"xchainz", "masternodeconnect", &masternodeconnect, true, true, false},
+        {"xchainz", "createmasternodebroadcast", &createmasternodebroadcast, true, true, false},
+        {"xchainz", "decodemasternodebroadcast", &decodemasternodebroadcast, true, true, false},
+        {"xchainz", "relaymasternodebroadcast", &relaymasternodebroadcast, true, true, false},
+        {"xchainz", "masternodecurrent", &masternodecurrent, true, true, false},
+        {"xchainz", "masternodedebug", &masternodedebug, true, true, false},
+        {"xchainz", "startmasternode", &startmasternode, true, true, false},
+        {"xchainz", "createmasternodekey", &createmasternodekey, true, true, false},
+        {"xchainz", "getmasternodeoutputs", &getmasternodeoutputs, true, true, false},
+        {"xchainz", "listmasternodeconf", &listmasternodeconf, true, true, false},
+        {"xchainz", "getmasternodestatus", &getmasternodestatus, true, true, false},
+        {"xchainz", "getmasternodewinners", &getmasternodewinners, true, true, false},
+        {"xchainz", "getmasternodescores", &getmasternodescores, true, true, false},
+        {"xchainz", "preparebudget", &preparebudget, true, true, false},
+        {"xchainz", "submitbudget", &submitbudget, true, true, false},
+        {"xchainz", "mnbudgetvote", &mnbudgetvote, true, true, false},
+        {"xchainz", "getbudgetvotes", &getbudgetvotes, true, true, false},
+        {"xchainz", "getnextsuperblock", &getnextsuperblock, true, true, false},
+        {"xchainz", "getbudgetprojection", &getbudgetprojection, true, true, false},
+        {"xchainz", "getbudgetinfo", &getbudgetinfo, true, true, false},
+        {"xchainz", "mnbudgetrawvote", &mnbudgetrawvote, true, true, false},
+        {"xchainz", "mnfinalbudget", &mnfinalbudget, true, true, false},
+        {"xchainz", "checkbudgets", &checkbudgets, true, true, false},
+        {"xchainz", "mnsync", &mnsync, true, true, false},
+        {"xchainz", "spork", &spork, true, true, false},
+        {"xchainz", "getpoolinfo", &getpoolinfo, true, true, false},
 
 #ifdef ENABLE_WALLET
         /* Wallet */
@@ -444,29 +447,6 @@ static const CRPCCommand vRPCCommands[] =
         {"wallet", "walletpassphrasechange", &walletpassphrasechange, true, false, true},
         {"wallet", "walletpassphrase", &walletpassphrase, true, false, true},
 
-        {"zerocoin", "createrawzerocoinstake", &createrawzerocoinstake, false, false, true},
-        {"zerocoin", "createrawzerocoinpublicspend", &createrawzerocoinpublicspend, false, false, true},
-        {"zerocoin", "getzerocoinbalance", &getzerocoinbalance, false, false, true},
-        {"zerocoin", "listmintedzerocoins", &listmintedzerocoins, false, false, true},
-        {"zerocoin", "listspentzerocoins", &listspentzerocoins, false, false, true},
-        {"zerocoin", "listzerocoinamounts", &listzerocoinamounts, false, false, true},
-        {"zerocoin", "mintzerocoin", &mintzerocoin, false, false, true},
-        {"zerocoin", "spendzerocoin", &spendzerocoin, false, false, true},
-        {"zerocoin", "spendrawzerocoin", &spendrawzerocoin, true, false, false},
-        {"zerocoin", "spendzerocoinmints", &spendzerocoinmints, false, false, true},
-        {"zerocoin", "resetmintzerocoin", &resetmintzerocoin, false, false, true},
-        {"zerocoin", "resetspentzerocoin", &resetspentzerocoin, false, false, true},
-        {"zerocoin", "getarchivedzerocoin", &getarchivedzerocoin, false, false, true},
-        {"zerocoin", "importzerocoins", &importzerocoins, false, false, true},
-        {"zerocoin", "exportzerocoins", &exportzerocoins, false, false, true},
-        {"zerocoin", "reconsiderzerocoins", &reconsiderzerocoins, false, false, true},
-        {"zerocoin", "getspentzerocoinamount", &getspentzerocoinamount, false, false, false},
-        {"zerocoin", "getzpivseed", &getzpivseed, false, false, true},
-        {"zerocoin", "setzpivseed", &setzpivseed, false, false, true},
-        {"zerocoin", "generatemintlist", &generatemintlist, false, false, true},
-        {"zerocoin", "searchdzpiv", &searchdzpiv, false, false, true},
-        {"zerocoin", "dzpivstate", &dzpivstate, false, false, true},
-        {"zerocoin", "clearspendcache", &clearspendcache, false, false, true}
 
 #endif // ENABLE_WALLET
 };
@@ -484,7 +464,7 @@ CRPCTable::CRPCTable()
 
 const CRPCCommand *CRPCTable::operator[](const std::string &name) const
 {
-    std::map<std::string, const CRPCCommand*>::const_iterator it = mapCommands.find(name);
+    map<string, const CRPCCommand*>::const_iterator it = mapCommands.find(name);
     if (it == mapCommands.end())
         return NULL;
     return (*it).second;
@@ -628,16 +608,16 @@ std::vector<std::string> CRPCTable::listCommands() const
     return commandList;
 }
 
-std::string HelpExampleCli(std::string methodname, std::string args)
+std::string HelpExampleCli(string methodname, string args)
 {
-    return "> pivx-cli " + methodname + " " + args + "\n";
+    return "> xchainz-cli " + methodname + " " + args + "\n";
 }
 
-std::string HelpExampleRpc(std::string methodname, std::string args)
+std::string HelpExampleRpc(string methodname, string args)
 {
     return "> curl --user myusername --data-binary '{\"jsonrpc\": \"1.0\", \"id\":\"curltest\", "
            "\"method\": \"" +
-           methodname + "\", \"params\": [" + args + "] }' -H 'content-type: text/plain;' http://127.0.0.1:51473/\n";
+           methodname + "\", \"params\": [" + args + "] }' -H 'content-type: text/plain;' http://127.0.0.1:14814/\n";
 }
 
 void RPCSetTimerInterfaceIfUnset(RPCTimerInterface *iface)

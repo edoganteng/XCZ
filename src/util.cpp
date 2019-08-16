@@ -2,11 +2,12 @@
 // Copyright (c) 2009-2014 The Bitcoin developers
 // Copyright (c) 2014-2015 The Dash developers
 // Copyright (c) 2015-2019 The PIVX developers
+// Copyright (c) 2019 The XChainZ developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #if defined(HAVE_CONFIG_H)
-#include "config/pivx-config.h"
+#include "config/xchainz-config.h"
 #endif
 
 #include "util.h"
@@ -87,12 +88,13 @@
 #include <openssl/crypto.h>
 #include <openssl/rand.h>
 
+using namespace std;
 
-// PIVX only features
+// XChainZ only features
 // Masternode
 bool fMasterNode = false;
-std::string strMasterNodePrivKey = "";
-std::string strMasterNodeAddr = "";
+string strMasterNodePrivKey = "";
+string strMasterNodeAddr = "";
 bool fLiteMode = false;
 // SwiftX
 bool fEnableSwiftTX = true;
@@ -109,16 +111,16 @@ int64_t enforceMasternodePaymentsTime = 4085657524;
 bool fSucessfullyLoaded = false;
 /** All denominations used by obfuscation */
 std::vector<int64_t> obfuScationDenominations;
-std::string strBudgetMode = "";
+string strBudgetMode = "";
 
-std::map<std::string, std::string> mapArgs;
-std::map<std::string, std::vector<std::string> > mapMultiArgs;
+map<string, string> mapArgs;
+map<string, vector<string> > mapMultiArgs;
 bool fDebug = false;
 bool fPrintToConsole = false;
 bool fPrintToDebugLog = true;
 bool fDaemon = false;
 bool fServer = false;
-std::string strMiscWarning;
+string strMiscWarning;
 bool fLogTimestamps = false;
 bool fLogIPs = false;
 volatile bool fReopenDebugLog = false;
@@ -214,28 +216,28 @@ bool LogAcceptCategory(const char* category)
         // This helps prevent issues debugging global destructors,
         // where mapMultiArgs might be deleted before another
         // global destructor calls LogPrint()
-        static boost::thread_specific_ptr<std::set<std::string> > ptrCategory;
+        static boost::thread_specific_ptr<set<string> > ptrCategory;
         if (ptrCategory.get() == NULL) {
-            const std::vector<std::string>& categories = mapMultiArgs["-debug"];
-            ptrCategory.reset(new std::set<std::string>(categories.begin(), categories.end()));
+            const vector<string>& categories = mapMultiArgs["-debug"];
+            ptrCategory.reset(new set<string>(categories.begin(), categories.end()));
             // thread_specific_ptr automatically deletes the set when the thread ends.
-            // "pivx" is a composite category enabling all PIVX-related debug output
-            if (ptrCategory->count(std::string("pivx"))) {
-                ptrCategory->insert(std::string("obfuscation"));
-                ptrCategory->insert(std::string("swiftx"));
-                ptrCategory->insert(std::string("masternode"));
-                ptrCategory->insert(std::string("mnpayments"));
-                ptrCategory->insert(std::string("zero"));
-                ptrCategory->insert(std::string("mnbudget"));
-                ptrCategory->insert(std::string("precompute"));
-                ptrCategory->insert(std::string("staking"));
+            // "xchainz" is a composite category enabling all XChainZ-related debug output
+            if (ptrCategory->count(string("xchainz"))) {
+                ptrCategory->insert(string("obfuscation"));
+                ptrCategory->insert(string("swiftx"));
+                ptrCategory->insert(string("masternode"));
+                ptrCategory->insert(string("mnpayments"));
+                ptrCategory->insert(string("zero"));
+                ptrCategory->insert(string("mnbudget"));
+                ptrCategory->insert(string("precompute"));
+                ptrCategory->insert(string("staking"));
             }
         }
-        const std::set<std::string>& setCategories = *ptrCategory.get();
+        const set<string>& setCategories = *ptrCategory.get();
 
         // if not debugging everything and not debugging specific category, LogPrint does nothing.
-        if (setCategories.count(std::string("")) == 0 &&
-            setCategories.count(std::string(category)) == 0)
+        if (setCategories.count(string("")) == 0 &&
+            setCategories.count(string(category)) == 0)
             return false;
     }
     return true;
@@ -387,7 +389,7 @@ static std::string FormatException(std::exception* pex, const char* pszThread)
     char pszModule[MAX_PATH] = "";
     GetModuleFileNameA(NULL, pszModule, sizeof(pszModule));
 #else
-    const char* pszModule = "pivx";
+    const char* pszModule = "xchainz";
 #endif
     if (pex)
         return strprintf(
@@ -408,13 +410,13 @@ void PrintExceptionContinue(std::exception* pex, const char* pszThread)
 boost::filesystem::path GetDefaultDataDir()
 {
     namespace fs = boost::filesystem;
-// Windows < Vista: C:\Documents and Settings\Username\Application Data\PIVX
-// Windows >= Vista: C:\Users\Username\AppData\Roaming\PIVX
-// Mac: ~/Library/Application Support/PIVX
-// Unix: ~/.pivx
+// Windows < Vista: C:\Documents and Settings\Username\Application Data\XChainZ
+// Windows >= Vista: C:\Users\Username\AppData\Roaming\XChainZ
+// Mac: ~/Library/Application Support/XChainZ
+// Unix: ~/.xchainz
 #ifdef WIN32
     // Windows
-    return GetSpecialFolderPath(CSIDL_APPDATA) / "PIVX";
+    return GetSpecialFolderPath(CSIDL_APPDATA) / "XChainZ";
 #else
     fs::path pathRet;
     char* pszHome = getenv("HOME");
@@ -426,10 +428,10 @@ boost::filesystem::path GetDefaultDataDir()
     // Mac
     pathRet /= "Library/Application Support";
     TryCreateDirectory(pathRet);
-    return pathRet / "PIVX";
+    return pathRet / "XChainZ";
 #else
     // Unix
-    return pathRet / ".pivx";
+    return pathRet / ".xchainz";
 #endif
 #endif
 }
@@ -476,7 +478,7 @@ void ClearDatadirCache()
 
 boost::filesystem::path GetConfigFile()
 {
-    boost::filesystem::path pathConfigFile(GetArg("-conf", "pivx.conf"));
+    boost::filesystem::path pathConfigFile(GetArg("-conf", "xchainz.conf"));
     if (!pathConfigFile.is_complete())
         pathConfigFile = GetDataDir(false) / pathConfigFile;
 
@@ -490,25 +492,25 @@ boost::filesystem::path GetMasternodeConfigFile()
     return pathConfigFile;
 }
 
-void ReadConfigFile(std::map<std::string, std::string>& mapSettingsRet,
-    std::map<std::string, std::vector<std::string> >& mapMultiSettingsRet)
+void ReadConfigFile(map<string, string>& mapSettingsRet,
+    map<string, vector<string> >& mapMultiSettingsRet)
 {
     boost::filesystem::ifstream streamConfig(GetConfigFile());
     if (!streamConfig.good()) {
-        // Create empty pivx.conf if it does not exist
+        // Create empty xchainz.conf if it does not exist
         FILE* configFile = fopen(GetConfigFile().string().c_str(), "a");
         if (configFile != NULL)
             fclose(configFile);
         return; // Nothing to read, so just return
     }
 
-    std::set<std::string> setOptions;
+    set<string> setOptions;
     setOptions.insert("*");
 
     for (boost::program_options::detail::config_file_iterator it(streamConfig, setOptions), end; it != end; ++it) {
-        // Don't overwrite existing settings so command line settings override pivx.conf
-        std::string strKey = std::string("-") + it->string_key;
-        std::string strValue = it->value[0];
+        // Don't overwrite existing settings so command line settings override xchainz.conf
+        string strKey = string("-") + it->string_key;
+        string strValue = it->value[0];
         InterpretNegativeSetting(strKey, strValue);
         if (mapSettingsRet.count(strKey) == 0)
             mapSettingsRet[strKey] = strValue;
@@ -521,7 +523,7 @@ void ReadConfigFile(std::map<std::string, std::string>& mapSettingsRet,
 #ifndef WIN32
 boost::filesystem::path GetPidFile()
 {
-    boost::filesystem::path pathPidFile(GetArg("-pid", "pivxd.pid"));
+    boost::filesystem::path pathPidFile(GetArg("-pid", "xchainzd.pid"));
     if (!pathPidFile.is_complete()) pathPidFile = GetDataDir() / pathPidFile;
     return pathPidFile;
 }

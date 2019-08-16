@@ -1,9 +1,10 @@
 // Copyright (c) 2017-2018 The PIVX developers
+// Copyright (c) 2019 The XChainZ developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef PIVX_QT_MULTISENDDIALOG_H
-#define PIVX_QT_MULTISENDDIALOG_H
+#ifndef XChainZ_QT_MULTISENDDIALOG_H
+#define XChainZ_QT_MULTISENDDIALOG_H
 
 #include <QDialog>
 
@@ -38,4 +39,4 @@ private:
     WalletModel* model;
 };
 
-#endif // PIVX_QT_MULTISENDDIALOG_H
+#endif // XChainZ_QT_MULTISENDDIALOG_H

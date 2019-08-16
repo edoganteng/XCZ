@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Name=XChainZ
+Comment=XChainZ P2P Cryptocurrency
+Comment[fr]=XChainZ, monnaie virtuelle cryptographique pair à pair
+Comment[tr]=XChainZ, eşten eşe kriptografik sanal para birimi
+Exec=xchainz-qt %u
+Terminal=false
+Type=Application
+Icon=xchainz128
+MimeType=x-scheme-handler/xchainz;
+Categories=Office;Finance;
+StartupWMClass=XChainZ-qt

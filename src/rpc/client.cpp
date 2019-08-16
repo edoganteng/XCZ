@@ -2,6 +2,7 @@
 // Copyright (c) 2009-2014 The Bitcoin developers
 // Copyright (c) 2014-2015 The Dash developers
 // Copyright (c) 2015-2019 The PIVX developers
+// Copyright (c) 2019 The XChainZ developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -17,6 +18,7 @@
 #include <boost/algorithm/string/case_conv.hpp> // for to_lower()
 #include <univalue.h>
 
+using namespace std;
 
 class CRPCConvertParam
 {
@@ -123,28 +125,6 @@ static const CRPCConvertParam vRPCConvertParams[] =
         {"setstakesplitthreshold", 0},
         {"autocombinerewards", 0},
         {"autocombinerewards", 1},
-        {"getzerocoinbalance", 0},
-        {"listmintedzerocoins", 0},
-        {"listmintedzerocoins", 1},
-        {"listspentzerocoins", 0},
-        {"listzerocoinamounts", 0},
-        {"mintzerocoin", 0},
-        {"mintzerocoin", 1},
-        {"spendzerocoin", 0},
-        {"spendzerocoin", 1},
-        {"spendzerocoin", 2},
-        {"spendrawzerocoin", 2},
-        {"spendzerocoinmints", 0},
-        {"importzerocoins", 0},
-        {"exportzerocoins", 0},
-        {"exportzerocoins", 1},
-        {"resetmintzerocoin", 0},
-        {"getspentzerocoinamount", 1},
-        {"generatemintlist", 0},
-        {"generatemintlist", 1},
-        {"searchdzpiv", 0},
-        {"searchdzpiv", 1},
-        {"searchdzpiv", 2},
         {"getaccumulatorvalues", 0},
         {"getaccumulatorwitness",2},
         {"getmintsvalues", 2},
@@ -198,7 +178,7 @@ UniValue ParseNonRFCJSONValue(const std::string& strVal)
     UniValue jVal;
     if (!jVal.read(std::string("[")+strVal+std::string("]")) ||
         !jVal.isArray() || jVal.size()!=1)
-        throw std::runtime_error(std::string("Error parsing JSON:")+strVal);
+        throw runtime_error(string("Error parsing JSON:")+strVal);
     return jVal[0];
 }
 

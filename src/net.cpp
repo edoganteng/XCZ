@@ -2,11 +2,12 @@
 // Copyright (c) 2009-2014 The Bitcoin developers
 // Copyright (c) 2014-2015 The Dash developers
 // Copyright (c) 2015-2019 The PIVX developers
+// Copyright (c) 2019 The XChainZ developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #if defined(HAVE_CONFIG_H)
-#include "config/pivx-config.h"
+#include "config/xchainz-config.h"
 #endif
 
 #include "net.h"
@@ -19,6 +20,9 @@
 #include "primitives/transaction.h"
 #include "scheduler.h"
 #include "guiinterface.h"
+#ifdef ENABLE_WALLET
+#include "wallet/wallet.h"
+#endif // ENABLE_WALLET
 
 #ifdef WIN32
 #include <string.h>
@@ -54,6 +58,8 @@
 #endif
 #endif
 
+using namespace boost;
+using namespace std;
 
 namespace
 {
@@ -74,7 +80,7 @@ bool fDiscover = true;
 bool fListen = true;
 uint64_t nLocalServices = NODE_NETWORK;
 CCriticalSection cs_mapLocalHost;
-std::map<CNetAddr, LocalServiceInfo> mapLocalHost;
+map<CNetAddr, LocalServiceInfo> mapLocalHost;
 static bool vfLimited[NET_MAX] = {};
 static CNode* pnodeLocalHost = NULL;
 uint64_t nLocalHostNonce = 0;
@@ -84,20 +90,20 @@ int nMaxConnections = 125;
 bool fAddressesInitialized = false;
 std::string strSubVersion;
 
-std::vector<CNode*> vNodes;
+vector<CNode*> vNodes;
 CCriticalSection cs_vNodes;
-std::map<CInv, CDataStream> mapRelay;
-std::deque<std::pair<int64_t, CInv> > vRelayExpiration;
+map<CInv, CDataStream> mapRelay;
+deque<pair<int64_t, CInv> > vRelayExpiration;
 CCriticalSection cs_mapRelay;
 limitedmap<CInv, int64_t> mapAlreadyAskedFor(MAX_INV_SZ);
 
-static std::deque<std::string> vOneShots;
+static deque<string> vOneShots;
 CCriticalSection cs_vOneShots;
 
-std::set<CNetAddr> setservAddNodeAddresses;
+set<CNetAddr> setservAddNodeAddresses;
 CCriticalSection cs_setservAddNodeAddresses;
 
-std::vector<std::string> vAddedNodes;
+vector<std::string> vAddedNodes;
 CCriticalSection cs_vAddedNodes;
 
 NodeId nLastNodeId = 0;
@@ -110,7 +116,7 @@ boost::condition_variable messageHandlerCondition;
 static CNodeSignals g_signals;
 CNodeSignals& GetNodeSignals() { return g_signals; }
 
-void AddOneShot(std::string strDest)
+void AddOneShot(string strDest)
 {
     LOCK(cs_vOneShots);
     vOneShots.push_back(strDest);
@@ -131,7 +137,7 @@ bool GetLocal(CService& addr, const CNetAddr* paddrPeer)
     int nBestReachability = -1;
     {
         LOCK(cs_mapLocalHost);
-        for (std::map<CNetAddr, LocalServiceInfo>::iterator it = mapLocalHost.begin(); it != mapLocalHost.end(); it++) {
+        for (map<CNetAddr, LocalServiceInfo>::iterator it = mapLocalHost.begin(); it != mapLocalHost.end(); it++) {
             int nScore = (*it).second.nScore;
             int nReachability = (*it).first.GetReachabilityFrom(paddrPeer);
             if (nReachability > nBestReachability || (nReachability == nBestReachability && nScore > nBestScore)) {
@@ -160,7 +166,7 @@ CAddress GetLocalAddress(const CNetAddr* paddrPeer)
     return ret;
 }
 
-bool RecvLine(SOCKET hSocket, std::string& strLine)
+bool RecvLine(SOCKET hSocket, string& strLine)
 {
     strLine = "";
     while (true) {
@@ -217,7 +223,7 @@ bool IsPeerAddrLocalGood(CNode* pnode)
 }
 
 // pushes our own address to a peer
-void AdvertiseLocal(CNode* pnode)
+void AdvertizeLocal(CNode* pnode)
 {
     if (fListen && pnode->fSuccessfullyConnected) {
         CAddress addrLocal = GetLocalAddress(&pnode->addr);
@@ -229,7 +235,7 @@ void AdvertiseLocal(CNode* pnode)
             addrLocal.SetIP(pnode->addrLocal);
         }
         if (addrLocal.IsRoutable()) {
-            LogPrintf("AdvertiseLocal: advertising address %s\n", addrLocal.ToString());
+            LogPrintf("AdvertizeLocal: advertizing address %s\n", addrLocal.ToString());
             pnode->PushAddress(addrLocal);
         }
     }
@@ -455,7 +461,7 @@ void CNode::CloseSocketDisconnect()
         vRecvMsg.clear();
 }
 
-bool CNode::DisconnectOldProtocol(int nVersionRequired, std::string strLastCommand)
+bool CNode::DisconnectOldProtocol(int nVersionRequired, string strLastCommand)
 {
     fDisconnect = false;
     if (nVersion < nVersionRequired) {
@@ -693,7 +699,7 @@ void CNode::copyStats(CNodeStats& stats)
         nPingUsecWait = GetTimeMicros() - nPingUsecStart;
     }
 
-    // Raw ping time is in microseconds, but show it to user as whole seconds (PIVX users should be well used to small numbers with many decimal places by now :)
+    // Raw ping time is in microseconds, but show it to user as whole seconds (XChainZ users should be well used to small numbers with many decimal places by now :)
     stats.dPingTime = (((double)nPingUsecTime) / 1e6);
     stats.dPingWait = (((double)nPingUsecWait) / 1e6);
 
@@ -830,7 +836,7 @@ void SocketSendData(CNode* pnode)
     pnode->vSendMsg.erase(pnode->vSendMsg.begin(), it);
 }
 
-static std::list<CNode*> vNodesDisconnected;
+static list<CNode*> vNodesDisconnected;
 
 void ThreadSocketHandler()
 {
@@ -842,7 +848,7 @@ void ThreadSocketHandler()
         {
             LOCK(cs_vNodes);
             // Disconnect unused nodes
-            std::vector<CNode*> vNodesCopy = vNodes;
+            vector<CNode*> vNodesCopy = vNodes;
             for (CNode* pnode : vNodesCopy) {
                 if (pnode->fDisconnect ||
                     (pnode->GetRefCount() <= 0 && pnode->vRecvMsg.empty() && pnode->nSendSize == 0 && pnode->ssSend.empty())) {
@@ -864,7 +870,7 @@ void ThreadSocketHandler()
         }
         {
             // Delete disconnected nodes
-            std::list<CNode*> vNodesDisconnectedCopy = vNodesDisconnected;
+            list<CNode*> vNodesDisconnectedCopy = vNodesDisconnected;
             for (CNode* pnode : vNodesDisconnectedCopy) {
                 // wait until threads are done using it
                 if (pnode->GetRefCount() <= 0) {
@@ -915,7 +921,7 @@ void ThreadSocketHandler()
 
         for (const ListenSocket& hListenSocket : vhListenSocket) {
             FD_SET(hListenSocket.socket, &fdsetRecv);
-            hSocketMax = std::max(hSocketMax, hListenSocket.socket);
+            hSocketMax = max(hSocketMax, hListenSocket.socket);
             have_fds = true;
         }
 
@@ -925,7 +931,7 @@ void ThreadSocketHandler()
                 if (pnode->hSocket == INVALID_SOCKET)
                     continue;
                 FD_SET(pnode->hSocket, &fdsetError);
-                hSocketMax = std::max(hSocketMax, pnode->hSocket);
+                hSocketMax = max(hSocketMax, pnode->hSocket);
                 have_fds = true;
 
                 // Implement the following logic:
@@ -1027,7 +1033,7 @@ void ThreadSocketHandler()
         //
         // Service each socket
         //
-        std::vector<CNode*> vNodesCopy;
+        vector<CNode*> vNodesCopy;
         {
             LOCK(cs_vNodes);
             vNodesCopy = vNodes;
@@ -1155,7 +1161,7 @@ void ThreadMapPort()
             }
         }
 
-        std::string strDesc = "PIVX " + FormatFullVersion();
+        string strDesc = "XChainZ " + FormatFullVersion();
 
         try {
             while (true) {
@@ -1236,7 +1242,7 @@ void ThreadDNSAddressSeed()
         }
     }
 
-    const std::vector<CDNSSeedData>& vSeeds = Params().DNSSeeds();
+    const vector<CDNSSeedData>& vSeeds = Params().DNSSeeds();
     int found = 0;
 
     LogPrintf("Loading addresses from DNS seeds (could take a while)\n");
@@ -1245,8 +1251,8 @@ void ThreadDNSAddressSeed()
         if (HaveNameProxy()) {
             AddOneShot(seed.host);
         } else {
-            std::vector<CNetAddr> vIPs;
-            std::vector<CAddress> vAdd;
+            vector<CNetAddr> vIPs;
+            vector<CAddress> vAdd;
             if (LookupHost(seed.host.c_str(), vIPs)) {
                 for (CNetAddr& ip : vIPs) {
                     int nOneDay = 24 * 3600;
@@ -1283,7 +1289,7 @@ void DumpData()
 
 void static ProcessOneShot()
 {
-    std::string strDest;
+    string strDest;
     {
         LOCK(cs_vOneShots);
         if (vOneShots.empty())
@@ -1305,7 +1311,7 @@ void ThreadOpenConnections()
     if (mapArgs.count("-connect") && mapMultiArgs["-connect"].size() > 0) {
         for (int64_t nLoop = 0;; nLoop++) {
             ProcessOneShot();
-            for (std::string strAddr : mapMultiArgs["-connect"]) {
+            for (string strAddr : mapMultiArgs["-connect"]) {
                 CAddress addr;
                 OpenNetworkConnection(addr, NULL, strAddr.c_str());
                 for (int i = 0; i < 10 && i < nLoop; i++) {
@@ -1344,7 +1350,7 @@ void ThreadOpenConnections()
         // Only connect out to one peer per network group (/16 for IPv4).
         // Do this here so we don't have to critsect vNodes inside mapAddresses critsect.
         int nOutbound = 0;
-        std::set<std::vector<unsigned char> > setConnected;
+        set<vector<unsigned char> > setConnected;
         {
             LOCK(cs_vNodes);
             for (CNode* pnode : vNodes) {
@@ -1401,13 +1407,13 @@ void ThreadOpenAddedConnections()
 
     if (HaveNameProxy()) {
         while (true) {
-            std::list<std::string> lAddresses(0);
+            list<string> lAddresses(0);
             {
                 LOCK(cs_vAddedNodes);
-                for (std::string& strAddNode : vAddedNodes)
+                for (string& strAddNode : vAddedNodes)
                     lAddresses.push_back(strAddNode);
             }
-            for (std::string& strAddNode : lAddresses) {
+            for (string& strAddNode : lAddresses) {
                 CAddress addr;
                 CSemaphoreGrant grant(*semOutbound);
                 OpenNetworkConnection(addr, &grant, strAddNode.c_str());
@@ -1418,16 +1424,16 @@ void ThreadOpenAddedConnections()
     }
 
     for (unsigned int i = 0; true; i++) {
-        std::list<std::string> lAddresses(0);
+        list<string> lAddresses(0);
         {
             LOCK(cs_vAddedNodes);
-            for (std::string& strAddNode : vAddedNodes)
+            for (string& strAddNode : vAddedNodes)
                 lAddresses.push_back(strAddNode);
         }
 
-        std::list<std::vector<CService> > lservAddressesToAdd(0);
-        for (std::string& strAddNode : lAddresses) {
-            std::vector<CService> vservNode(0);
+        list<vector<CService> > lservAddressesToAdd(0);
+        for (string& strAddNode : lAddresses) {
+            vector<CService> vservNode(0);
             if (Lookup(strAddNode.c_str(), vservNode, Params().GetDefaultPort(), fNameLookup, 0)) {
                 lservAddressesToAdd.push_back(vservNode);
                 {
@@ -1442,7 +1448,7 @@ void ThreadOpenAddedConnections()
         {
             LOCK(cs_vNodes);
             for (CNode* pnode : vNodes)
-                for (std::list<std::vector<CService> >::iterator it = lservAddressesToAdd.begin(); it != lservAddressesToAdd.end(); it++)
+                for (list<vector<CService> >::iterator it = lservAddressesToAdd.begin(); it != lservAddressesToAdd.end(); it++)
                     for (CService& addrNode : *(it))
                         if (pnode->addr == addrNode) {
                             it = lservAddressesToAdd.erase(it);
@@ -1450,7 +1456,7 @@ void ThreadOpenAddedConnections()
                             break;
                         }
         }
-        for (std::vector<CService>& vserv : lservAddressesToAdd) {
+        for (vector<CService>& vserv : lservAddressesToAdd) {
             CSemaphoreGrant grant(*semOutbound);
             OpenNetworkConnection(CAddress(vserv[i % vserv.size()]), &grant);
             MilliSleep(500);
@@ -1496,7 +1502,7 @@ void ThreadMessageHandler()
 
     SetThreadPriority(THREAD_PRIORITY_BELOW_NORMAL);
     while (true) {
-        std::vector<CNode*> vNodesCopy;
+        vector<CNode*> vNodesCopy;
         {
             LOCK(cs_vNodes);
             vNodesCopy = vNodes;
@@ -1553,7 +1559,26 @@ void ThreadMessageHandler()
     }
 }
 
-bool BindListenPort(const CService& addrBind, std::string& strError, bool fWhitelisted)
+#ifdef ENABLE_WALLET
+// ppcoin: stake minter thread
+void static ThreadStakeMinter()
+{
+    boost::this_thread::interruption_point();
+    LogPrintf("ThreadStakeMinter started\n");
+    CWallet* pwallet = pwalletMain;
+    try {
+        BitcoinMiner(pwallet, true);
+        boost::this_thread::interruption_point();
+    } catch (std::exception& e) {
+        LogPrintf("ThreadStakeMinter() exception \n");
+    } catch (...) {
+        LogPrintf("ThreadStakeMinter() error \n");
+    }
+    LogPrintf("ThreadStakeMinter exiting,\n");
+}
+#endif // ENABLE_WALLET
+
+bool BindListenPort(const CService& addrBind, string& strError, bool fWhitelisted)
 {
     strError = "";
     int nOne = 1;
@@ -1616,7 +1641,7 @@ bool BindListenPort(const CService& addrBind, std::string& strError, bool fWhite
     if (::bind(hListenSocket, (struct sockaddr*)&sockaddr, len) == SOCKET_ERROR) {
         int nErr = WSAGetLastError();
         if (nErr == WSAEADDRINUSE)
-            strError = strprintf(_("Unable to bind to %s on this computer. PIVX Core is probably already running."), addrBind.ToString());
+            strError = strprintf(_("Unable to bind to %s on this computer. XChainZ is probably already running."), addrBind.ToString());
         else
             strError = strprintf(_("Unable to bind to %s on this computer (bind returned error %s)"), addrBind.ToString(), NetworkErrorString(nErr));
         LogPrintf("%s\n", strError);
@@ -1650,7 +1675,7 @@ void static Discover(boost::thread_group& threadGroup)
     // Get local host IP
     char pszHostName[256] = "";
     if (gethostname(pszHostName, sizeof(pszHostName)) != SOCKET_ERROR) {
-        std::vector<CNetAddr> vaddr;
+        vector<CNetAddr> vaddr;
         if (LookupHost(pszHostName, vaddr)) {
             for (const CNetAddr& addr : vaddr) {
                 if (AddLocal(addr, LOCAL_IF))
@@ -1715,7 +1740,7 @@ void StartNode(boost::thread_group& threadGroup, CScheduler& scheduler)
 
     if (semOutbound == NULL) {
         // initialize semaphore
-        int nMaxOutbound = std::min(MAX_OUTBOUND_CONNECTIONS, nMaxConnections);
+        int nMaxOutbound = min(MAX_OUTBOUND_CONNECTIONS, nMaxConnections);
         semOutbound = new CSemaphore(nMaxOutbound);
     }
 
@@ -1750,6 +1775,12 @@ void StartNode(boost::thread_group& threadGroup, CScheduler& scheduler)
 
     // Dump network addresses
     scheduler.scheduleEvery(&DumpData, DUMP_ADDRESSES_INTERVAL);
+
+#ifdef ENABLE_WALLET
+    // ppcoin:mint proof-of-stake blocks in the background
+    if (GetBoolArg("-staking", true) && pwalletMain)
+        threadGroup.create_thread(boost::bind(&TraceThread<void (*)()>, "stakemint", &ThreadStakeMinter));
+#endif // ENABLE_WALLET
 }
 
 bool StopNode()
@@ -1986,7 +2017,7 @@ bool CAddrDB::Read(CAddrMan& addr)
     // Don't try to resize to a negative number if file is small
     if (fileSize >= sizeof(uint256))
         dataSize = fileSize - sizeof(uint256);
-    std::vector<unsigned char> vchData;
+    vector<unsigned char> vchData;
     vchData.resize(dataSize);
     uint256 hashIn;
 
@@ -2241,7 +2272,7 @@ bool CBanDB::Read(banmap_t& banSet)
     // Don't try to resize to a negative number if file is small
     if (fileSize >= sizeof(uint256))
         dataSize = fileSize - sizeof(uint256);
-    std::vector<unsigned char> vchData;
+    vector<unsigned char> vchData;
     vchData.resize(dataSize);
     uint256 hashIn;
 

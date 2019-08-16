@@ -2,7 +2,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 #include "addrman.h"
-#include "test/test_pivx.h"
+#include "test/test_xchainz.h"
 #include <string>
 #include <boost/test/unit_test.hpp>
 #include <crypto/common.h> // for ReadLE64
@@ -340,7 +340,7 @@ BOOST_AUTO_TEST_CASE(addrman_getaddr)
     // Test 22: Sanity check, GetAddr should never return anything if addrman
     //  is empty.
     BOOST_CHECK(addrman.size() == 0);
-    std::vector<CAddress> vAddr1 = addrman.GetAddr();
+    vector<CAddress> vAddr1 = addrman.GetAddr();
     BOOST_CHECK(vAddr1.size() == 0);
 
     CAddress addr1 = CAddress(CService("250.250.2.1", 8333));

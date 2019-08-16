@@ -6,7 +6,7 @@
 
 #include "random.h"
 #include "util.h"
-#include "test/test_pivx.h"
+#include "test/test_xchainz.h"
 
 #include <set>
 
@@ -15,6 +15,7 @@
 #define NUM_TESTS 16
 #define MAX_SIZE 100
 
+using namespace std;
 
 class mrutester
 {
@@ -87,8 +88,8 @@ BOOST_AUTO_TEST_CASE(mruset_window)
     {
         mru.insert(permute(n));
 
-        std::set<int> tester;
-        for (int m=std::max(0,n-MAX_SIZE+1); m<=n; m++)
+        set<int> tester;
+        for (int m=max(0,n-MAX_SIZE+1); m<=n; m++)
             tester.insert(permute(m));
 
         BOOST_CHECK(mru == tester);

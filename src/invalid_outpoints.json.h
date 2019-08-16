@@ -1,9 +1,10 @@
 // Copyright (c) 2018 The PIVX developers
+// Copyright (c) 2019 The XChainZ developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef PIVX_INVALID_OUTPOINTS_JSON_H
-#define PIVX_INVALID_OUTPOINTS_JSON_H
+#ifndef XChainZ_INVALID_OUTPOINTS_JSON_H
+#define XChainZ_INVALID_OUTPOINTS_JSON_H
 #include <string>
 
 std::string LoadInvalidOutPoints()
@@ -6793,4 +6794,4 @@ std::string LoadInvalidOutPoints()
     return str;
 }
 
-#endif //PIVX_INVALID_OUTPOINTS_JSON_H
+#endif //XChainZ_INVALID_OUTPOINTS_JSON_H

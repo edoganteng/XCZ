@@ -1,6 +1,7 @@
 // Copyright (c) 2010 Satoshi Nakamoto
 // Copyright (c) 2009-2014 The Bitcoin developers
 // Copyright (c) 2017-2019 The PIVX developers
+// Copyright (c) 2019 The XChainZ developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -22,8 +23,9 @@
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/thread.hpp>
 
+using namespace std;
 
-std::map<uint256, CAlert> mapAlerts;
+map<uint256, CAlert> mapAlerts;
 CCriticalSection cs_mapAlerts;
 
 void CUnsignedAlert::SetNull()
@@ -159,7 +161,7 @@ CAlert CAlert::getAlertByHash(const uint256& hash)
     CAlert retval;
     {
         LOCK(cs_mapAlerts);
-        std::map<uint256, CAlert>::iterator mi = mapAlerts.find(hash);
+        map<uint256, CAlert>::iterator mi = mapAlerts.find(hash);
         if (mi != mapAlerts.end())
             retval = mi->second;
     }
@@ -196,7 +198,7 @@ bool CAlert::ProcessAlert(bool fThread)
     {
         LOCK(cs_mapAlerts);
         // Cancel previous alerts
-        for (std::map<uint256, CAlert>::iterator mi = mapAlerts.begin(); mi != mapAlerts.end();) {
+        for (map<uint256, CAlert>::iterator mi = mapAlerts.begin(); mi != mapAlerts.end();) {
             const CAlert& alert = (*mi).second;
             if (Cancels(alert)) {
                 LogPrint("alert", "cancelling alert %d\n", alert.nID);
@@ -220,7 +222,7 @@ bool CAlert::ProcessAlert(bool fThread)
         }
 
         // Add to mapAlerts
-        mapAlerts.insert(std::make_pair(GetHash(), *this));
+        mapAlerts.insert(make_pair(GetHash(), *this));
         // Notify UI and -alertnotify if it applies to me
         if (AppliesToMe()) {
             uiInterface.NotifyAlertChanged(GetHash(), CT_NEW);

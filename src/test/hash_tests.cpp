@@ -4,12 +4,13 @@
 
 #include "hash.h"
 #include "utilstrencodings.h"
-#include "test/test_pivx.h"
+#include "test/test_xchainz.h"
 
 #include <vector>
 
 #include <boost/test/unit_test.hpp>
 
+using namespace std;
 
 BOOST_FIXTURE_TEST_SUITE(hash_tests, BasicTestingSetup)
 

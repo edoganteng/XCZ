@@ -1,0 +1,6 @@
+usr/local/bin/xchainz-qt usr/bin
+share/pixmaps/xchainz32.xpm usr/share/pixmaps
+share/pixmaps/xchainz16.xpm usr/share/pixmaps
+share/pixmaps/xchainz128.png usr/share/pixmaps
+debian/xchainz-qt.desktop usr/share/applications
+debian/xchainz-qt.protocol usr/share/kde4/services/

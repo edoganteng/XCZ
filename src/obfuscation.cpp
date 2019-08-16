@@ -1,5 +1,6 @@
 // Copyright (c) 2014-2015 The Dash developers
 // Copyright (c) 2015-2019 The PIVX developers
+// Copyright (c) 2019 The XChainZ developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -21,6 +22,8 @@
 #include <boost/assign/list_of.hpp>
 #include <openssl/rand.h>
 
+using namespace std;
+using namespace boost;
 
 // The main object for accessing Obfuscation
 CObfuscationPool obfuScationPool;
@@ -31,7 +34,7 @@ std::vector<CObfuscationQueue> vecObfuscationQueue;
 // Keep track of the used Masternodes
 std::vector<CTxIn> vecMasternodesUsed;
 // Keep track of the scanning errors I've seen
-std::map<uint256, CObfuscationBroadcastTx> mapObfuscationBroadcastTxes;
+map<uint256, CObfuscationBroadcastTx> mapObfuscationBroadcastTxes;
 // Keep track of the active Masternode
 CActiveMasternode activeMasternode;
 
@@ -224,7 +227,7 @@ void CObfuscationPool::CheckFinalTransaction()
             dstx.vchSig = vchSig;
             dstx.sigTime = sigTime;
 
-            mapObfuscationBroadcastTxes.insert(std::make_pair(txNew.GetHash(), dstx));
+            mapObfuscationBroadcastTxes.insert(make_pair(txNew.GetHash(), dstx));
         }
 
         CInv inv(MSG_DSTX, txNew.GetHash());
@@ -371,9 +374,9 @@ void CObfuscationPool::ChargeRandomFees()
 
                 Being that Obfuscation has "no fees" we need to have some kind of cost associated
                 with using it to stop abuse. Otherwise it could serve as an attack vector and
-                allow endless transaction that would bloat PIVX and make it unusable. To
+                allow endless transaction that would bloat XChainZ and make it unusable. To
                 stop these kinds of attacks 1 in 10 successful transactions are charged. This
-                adds up to a cost of 0.001 PIV per transaction on average.
+                adds up to a cost of 0.001 XCZ per transaction on average.
             */
             if (r <= 10) {
                 LogPrintf("CObfuscationPool::ChargeRandomFees -- charging random fees. %u\n", i);
@@ -418,7 +421,7 @@ void CObfuscationPool::CheckTimeout()
 
     // check Obfuscation queue objects for timeouts
     int c = 0;
-    std::vector<CObfuscationQueue>::iterator it = vecObfuscationQueue.begin();
+    vector<CObfuscationQueue>::iterator it = vecObfuscationQueue.begin();
     while (it != vecObfuscationQueue.end()) {
         if ((*it).IsExpired()) {
             LogPrint("obfuscation", "CObfuscationPool::CheckTimeout() : Removing expired queue entry - %d\n", c);
@@ -435,7 +438,7 @@ void CObfuscationPool::CheckTimeout()
         c = 0;
 
         // check for a timeout and reset if needed
-        std::vector<CObfuScationEntry>::iterator it2 = entries.begin();
+        vector<CObfuScationEntry>::iterator it2 = entries.begin();
         while (it2 != entries.end()) {
             if ((*it2).IsExpired()) {
                 LogPrint("obfuscation", "CObfuscationPool::CheckTimeout() : Removing expired entry - %d\n", c);
@@ -533,7 +536,7 @@ bool CObfuScationSigner::IsVinAssociatedWithPubkey(CTxIn& vin, CPubKey& pubkey)
     uint256 hash;
     if (GetTransaction(vin.prevout.hash, txVin, hash, true)) {
         for (CTxOut out : txVin.vout) {
-            if (out.nValue == 10000 * COIN) {
+            if (out.nValue == 1000 * COIN) {
                 if (out.scriptPubKey == payee2) return true;
             }
         }
@@ -570,7 +573,7 @@ bool CObfuScationSigner::GetKeysFromSecret(std::string strSecret, CKey& keyRet, 
     return true;
 }
 
-bool CObfuScationSigner::SignMessage(std::string strMessage, std::string& errorMessage, std::vector<unsigned char>& vchSig, CKey key)
+bool CObfuScationSigner::SignMessage(std::string strMessage, std::string& errorMessage, vector<unsigned char>& vchSig, CKey key)
 {
     CHashWriter ss(SER_GETHASH, 0);
     ss << strMessageMagic;
@@ -584,7 +587,7 @@ bool CObfuScationSigner::SignMessage(std::string strMessage, std::string& errorM
     return true;
 }
 
-bool CObfuScationSigner::VerifyMessage(CPubKey pubkey, std::vector<unsigned char>& vchSig, std::string strMessage, std::string& errorMessage)
+bool CObfuScationSigner::VerifyMessage(CPubKey pubkey, vector<unsigned char>& vchSig, std::string strMessage, std::string& errorMessage)
 {
     CHashWriter ss(SER_GETHASH, 0);
     ss << strMessageMagic;
@@ -669,7 +672,7 @@ void ThreadCheckObfuScationPool()
     if (fLiteMode) return; //disable all Obfuscation/Masternode related functionality
 
     // Make this thread recognisable as the wallet flushing thread
-    RenameThread("pivx-obfuscation");
+    RenameThread("xchainz-obfuscation");
 
     unsigned int c = 0;
 

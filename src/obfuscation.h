@@ -1,5 +1,6 @@
 // Copyright (c) 2014-2015 The Dash developers
 // Copyright (c) 2015-2019 The PIVX developers
+// Copyright (c) 2019 The XChainZ developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -53,7 +54,7 @@ extern CObfuscationPool obfuScationPool;
 extern CObfuScationSigner obfuScationSigner;
 extern std::vector<CObfuscationQueue> vecObfuscationQueue;
 extern std::string strMasterNodePrivKey;
-extern std::map<uint256, CObfuscationBroadcastTx> mapObfuscationBroadcastTxes;
+extern map<uint256, CObfuscationBroadcastTx> mapObfuscationBroadcastTxes;
 extern CActiveMasternode activeMasternode;
 
 /** Holds an Obfuscation input
@@ -194,7 +195,7 @@ class CObfuscationBroadcastTx
 public:
     CTransaction tx;
     CTxIn vin;
-    std::vector<unsigned char> vchSig;
+    vector<unsigned char> vchSig;
     int64_t sigTime;
 };
 
@@ -203,7 +204,7 @@ public:
 class CObfuScationSigner
 {
 public:
-    /// Is the inputs associated with this public key? (and there is 10000 PIV - checking if valid masternode)
+    /// Is the inputs associated with this public key? (and there is 10000 XCZ - checking if valid masternode)
     bool IsVinAssociatedWithPubkey(CTxIn& vin, CPubKey& pubkey);
     /// Set the private/public key values, returns true if successful
     bool GetKeysFromSecret(std::string strSecret, CKey& keyRet, CPubKey& pubkeyRet);

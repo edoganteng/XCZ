@@ -55,51 +55,45 @@ TEST_EXIT_SKIPPED = 77
 BASE_SCRIPTS= [
     # Scripts that are run by the travis build process.
     # Longest test should go first, to favor running tests in parallel
-    'wallet_basic.py',
     'wallet_backup.py',
-
-    # vv Tests less than 5m vv
-    'rpc_rawtransaction.py',
-    'wallet_zapwallettxes.py',
-    'wallet_keypool_topup.py',
-    'p2p_pos_doublespend.py',
-    'wallet_txn_doublespend.py --mineblock',
-    'wallet_txn_clone.py --mineblock',
-    'interface_rest.py',
-    'feature_proxy.py',
     'p2p_pos_fakestake.py',
     'p2p_pos_fakestake_accepted.py',
     #'p2p_zpos_fakestake.py',
     #'p2p_zpos_fakestake_accepted.py',
     #'zerocoin_wrapped_serials.py',
+    # vv Tests less than 5m vv
     #'feature_block.py',
     #'rpc_fundrawtransaction.py',
-
     # vv Tests less than 2m vv
-    'feature_uacomment.py',
-    'wallet_listreceivedby.py',
+    'p2p_pos_doublespend.py',
+    'wallet_basic.py',
     'wallet_accounts.py',
     'wallet_dump.py',
     'rpc_listtransactions.py',
-
     # vv Tests less than 60s vv
+    'wallet_zapwallettxes.py',
     #'wallet_importmulti.py',
     #'mempool_limit.py', # We currently don't limit our mempool
+    'wallet_listreceivedby.py',
     #'wallet_abandonconflict.py',
+    'rpc_rawtransaction.py',
     'feature_reindex.py',
     'rpc_bip38.py',
-
     # vv Tests less than 30s vv
-    'rpc_spork.py',
+    'wallet_keypool_topup.py',
     #'interface_zmq.py',
     'interface_bitcoin_cli.py',
     'mempool_resurrect.py',
+    'wallet_txn_doublespend.py --mineblock',
+    'wallet_txn_clone.py --mineblock',
     #'rpc_getchaintips.py',
+    'interface_rest.py',
     'mempool_spend_coinbase.py',
     'mempool_reorg.py',
     #'mempool_persist.py', # Not yet implemented
     'interface_http.py',
     #'rpc_users.py',
+    'feature_proxy.py',
     'rpc_signrawtransaction.py',
     'p2p_disconnect_ban.py',
     'rpc_decodescript.py',
@@ -123,6 +117,7 @@ BASE_SCRIPTS= [
     #'wallet_resendwallettransactions.py',
     #'feature_minchainwork.py',
     #'p2p_fingerprint.py',
+    'feature_uacomment.py',
     #'p2p_unrequested_blocks.py',
     #'feature_config_args.py',
     'feature_help.py',
@@ -173,7 +168,7 @@ def main():
     parser.add_argument('--help', '-h', '-?', action='store_true', help='print help text and exit')
     parser.add_argument('--jobs', '-j', type=int, default=4, help='how many test scripts to run in parallel. Default=4.')
     parser.add_argument('--keepcache', '-k', action='store_true', help='the default behavior is to flush the cache directory on startup. --keepcache retains the cache from the previous testrun.')
-    parser.add_argument('--quiet', '-q', action='store_true', help='only print dots, results summary and failure logs')
+    parser.add_argument('--quiet', '-q', action='store_true', help='only print results summary and failure logs')
     parser.add_argument('--tmpdirprefix', '-t', default=tempfile.gettempdir(), help="Root directory for datadirs")
     args, unknown_args = parser.parse_known_args()
 
@@ -193,7 +188,7 @@ def main():
     logging.basicConfig(format='%(message)s', level=logging_level)
 
     # Create base test directory
-    tmpdir = "%s/pivx_test_runner_%s" % (args.tmpdirprefix, datetime.datetime.now().strftime("%Y%m%d_%H%M%S"))
+    tmpdir = "%s/xchainz_test_runner_%s" % (args.tmpdirprefix, datetime.datetime.now().strftime("%Y%m%d_%H%M%S"))
     os.makedirs(tmpdir)
 
     logging.debug("Temporary test directory at %s" % tmpdir)
@@ -209,7 +204,7 @@ def main():
         sys.exit(0)
 
     if not (enable_wallet and enable_utils and enable_bitcoind):
-        print("No functional tests to run. Wallet, utils, and pivxd must all be enabled")
+        print("No functional tests to run. Wallet, utils, and xchainzd must all be enabled")
         print("Rerun `configure` with -enable-wallet, -with-utils and -with-daemon and rerun make")
         sys.exit(0)
 
@@ -264,8 +259,8 @@ def main():
 def run_tests(test_list, src_dir, build_dir, exeext, tmpdir, jobs=1, enable_coverage=False, args=[], combined_logs_len=0):
     # Warn if bitcoind is already running (unix only)
     try:
-        if subprocess.check_output(["pidof", "pivxd"]) is not None:
-            print("%sWARNING!%s There is already a pivxd process running on this system. Tests may fail unexpectedly due to resource contention!" % (BOLD[1], BOLD[0]))
+        if subprocess.check_output(["pidof", "xchainzd"]) is not None:
+            print("%sWARNING!%s There is already a xchainzd process running on this system. Tests may fail unexpectedly due to resource contention!" % (BOLD[1], BOLD[0]))
     except (OSError, subprocess.SubprocessError):
         pass
 
@@ -276,8 +271,8 @@ def run_tests(test_list, src_dir, build_dir, exeext, tmpdir, jobs=1, enable_cove
 
     #Set env vars
     if "BITCOIND" not in os.environ:
-        os.environ["BITCOIND"] = build_dir + '/src/pivxd' + exeext
-        os.environ["BITCOINCLI"] = build_dir + '/src/pivx-cli' + exeext
+        os.environ["BITCOIND"] = build_dir + '/src/xchainzd' + exeext
+        os.environ["BITCOINCLI"] = build_dir + '/src/xchainz-cli' + exeext
 
     tests_dir = src_dir + '/test/functional/'
 
@@ -305,21 +300,17 @@ def run_tests(test_list, src_dir, build_dir, exeext, tmpdir, jobs=1, enable_cove
     test_results = []
 
     max_len_name = len(max(test_list, key=len))
-    test_count = len(test_list)
-    for i in range(test_count):
+
+    for _ in range(len(test_list)):
         test_result, testdir, stdout, stderr = job_queue.get_next()
         test_results.append(test_result)
-        done_str = "{}/{} - {}{}{}".format(i + 1, test_count, BOLD[1], test_result.name, BOLD[0])
+
         if test_result.status == "Passed":
-            if stderr == "":
-                logging.debug("%s passed, Duration: %s s" % (done_str, test_result.time))
-            else:
-                logging.debug("%s passed (with warnings), Duration: %s s" % (done_str, test_result.time))
-                print(BOLD[1] + 'stderr:\n' + BOLD[0] + stderr + '\n')
+            logging.debug("\n%s%s%s passed, Duration: %s s" % (BOLD[1], test_result.name, BOLD[0], test_result.time))
         elif test_result.status == "Skipped":
-            logging.debug("%s skipped" % (done_str))
+            logging.debug("\n%s%s%s skipped" % (BOLD[1], test_result.name, BOLD[0]))
         else:
-            print("%s failed, Duration: %s s\n" % (done_str, test_result.time))
+            print("\n%s%s%s failed, Duration: %s s\n" % (BOLD[1], test_result.name, BOLD[0], test_result.time))
             print(BOLD[1] + 'stdout:\n' + BOLD[0] + stdout + '\n')
             print(BOLD[1] + 'stderr:\n' + BOLD[0] + stderr + '\n')
             if combined_logs_len and os.path.isdir(testdir):
@@ -378,7 +369,7 @@ class TestHandler:
         self.test_list = test_list
         self.flags = flags
         self.num_running = 0
-        # In case there is a graveyard of zombie pivxds, we can apply a
+        # In case there is a graveyard of zombie xchainzds, we can apply a
         # pseudorandom offset to hopefully jump over them.
         # (625 is PORT_RANGE/MAX_NODES)
         self.portseed_offset = int(time.time() * 1000) % 625
@@ -407,12 +398,6 @@ class TestHandler:
                               log_stderr))
         if not self.jobs:
             raise IndexError('pop from empty list')
-
-        # Print remaining running jobs when all jobs have been started.
-        if not self.test_list:
-            print("Remaining jobs: [{}]".format(", ".join(j[0] for j in self.jobs)))
-
-        dot_count = 0
         while True:
             # Return first proc that finishes
             time.sleep(.5)
@@ -426,7 +411,7 @@ class TestHandler:
                     log_out.seek(0), log_err.seek(0)
                     [stdout, stderr] = [l.read().decode('utf-8') for l in (log_out, log_err)]
                     log_out.close(), log_err.close()
-                    if proc.returncode == TEST_EXIT_PASSED:
+                    if proc.returncode == TEST_EXIT_PASSED and stderr == "":
                         status = "Passed"
                     elif proc.returncode == TEST_EXIT_SKIPPED:
                         status = "Skipped"
@@ -434,12 +419,9 @@ class TestHandler:
                         status = "Failed"
                     self.num_running -= 1
                     self.jobs.remove(j)
-                    clearline = '\r' + (' ' * dot_count) + '\r'
-                    print(clearline, end='', flush=True)
-                    dot_count = 0
+
                     return TestResult(name, status, int(time.time() - time0)), testdir, stdout, stderr
             print('.', end='', flush=True)
-            dot_count += 1
 
 class TestResult():
     def __init__(self, name, status, time):
@@ -505,7 +487,7 @@ class RPCCoverage():
     Coverage calculation works by having each test script subprocess write
     coverage files into a particular directory. These files contain the RPC
     commands invoked during testing, as well as a complete listing of RPC
-    commands per `pivx-cli help` (`rpc_interface.txt`).
+    commands per `xchainz-cli help` (`rpc_interface.txt`).
 
     After all tests complete, the commands run are combined and diff'd against
     the complete list to calculate uncovered RPC commands.

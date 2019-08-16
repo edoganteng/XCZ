@@ -10,6 +10,7 @@
  * @license    This project is released under the MIT license.
  **/
 // Copyright (c) 2017-2019 The PIVX developers
+// Copyright (c) 2019 The XChainZ developers
 
 #include <stdexcept>
 #include <iostream>
@@ -104,7 +105,7 @@ PrivateCoin::PrivateCoin(const ZerocoinParams* p, const CoinDenomination denomin
 bool PrivateCoin::IsValid()
 {
     if (!IsValidSerial(params, serialNumber)) {
-        std::cout << "Serial not valid\n";
+        cout << "Serial not valid\n";
         return false;
     }
 
@@ -150,7 +151,7 @@ const CPubKey PrivateCoin::getPubKey() const
 	return key.GetPubKey();
 }
 
-bool PrivateCoin::sign(const uint256& hash, std::vector<unsigned char>& vchSig) const
+bool PrivateCoin::sign(const uint256& hash, vector<unsigned char>& vchSig) const
 {
 	CKey key;
 	key.SetPrivKey(privkey, true);

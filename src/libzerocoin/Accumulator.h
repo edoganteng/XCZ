@@ -10,6 +10,7 @@
  * @license    This project is released under the MIT license.
  **/
 // Copyright (c) 2017-2019 The PIVX developers
+// Copyright (c) 2019 The XChainZ developers
 
 #ifndef ACCUMULATOR_H_
 #define ACCUMULATOR_H_
@@ -71,7 +72,7 @@ public:
     const CBigNum& getValue() const;
 
     void setValue(CBigNum bnValue);
-    void setInitialValue();
+    //void setInitialValue();
 
     // /**
     //  * Used to set the accumulator value

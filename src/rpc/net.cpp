@@ -1,6 +1,7 @@
 // Copyright (c) 2009-2014 The Bitcoin developers
 // Copyright (c) 2014-2015 The Dash developers
 // Copyright (c) 2015-2019 The PIVX developers
+// Copyright (c) 2019 The XChainZ developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -20,11 +21,12 @@
 
 #include <univalue.h>
 
+using namespace std;
 
 UniValue getconnectioncount(const UniValue& params, bool fHelp)
 {
     if (fHelp || params.size() != 0)
-        throw std::runtime_error(
+        throw runtime_error(
             "getconnectioncount\n"
             "\nReturns the number of connections to other nodes.\n"
 
@@ -42,7 +44,7 @@ UniValue getconnectioncount(const UniValue& params, bool fHelp)
 UniValue ping(const UniValue& params, bool fHelp)
 {
     if (fHelp || params.size() != 0)
-        throw std::runtime_error(
+        throw runtime_error(
             "ping\n"
             "\nRequests that a ping be sent to all other nodes, to measure ping time.\n"
             "Results provided in getpeerinfo, pingtime and pingwait fields are decimal seconds.\n"
@@ -77,7 +79,7 @@ static void CopyNodeStats(std::vector<CNodeStats>& vstats)
 UniValue getpeerinfo(const UniValue& params, bool fHelp)
 {
     if (fHelp || params.size() != 0)
-        throw std::runtime_error(
+        throw runtime_error(
             "getpeerinfo\n"
             "\nReturns data about each connected network node as a json array of objects.\n"
 
@@ -97,7 +99,7 @@ UniValue getpeerinfo(const UniValue& params, bool fHelp)
             "    \"pingtime\": n,             (numeric) ping time\n"
             "    \"pingwait\": n,             (numeric) ping wait\n"
             "    \"version\": v,              (numeric) The peer version, such as 7001\n"
-            "    \"subver\": \"/Pivx Core:x.x.x.x/\",  (string) The string version\n"
+            "    \"subver\": \"/XChainZ:x.x.x.x/\",  (string) The string version\n"
             "    \"inbound\": true|false,     (boolean) Inbound (true) or Outbound (false)\n"
             "    \"startingheight\": n,       (numeric) The starting height (block) of the peer\n"
             "    \"banscore\": n,             (numeric) The ban score\n"
@@ -116,7 +118,7 @@ UniValue getpeerinfo(const UniValue& params, bool fHelp)
 
     LOCK(cs_main);
 
-    std::vector<CNodeStats> vstats;
+    vector<CNodeStats> vstats;
     CopyNodeStats(vstats);
 
     UniValue ret(UniValue::VARR);
@@ -166,12 +168,12 @@ UniValue getpeerinfo(const UniValue& params, bool fHelp)
 
 UniValue addnode(const UniValue& params, bool fHelp)
 {
-    std::string strCommand;
+    string strCommand;
     if (params.size() == 2)
         strCommand = params[1].get_str();
     if (fHelp || params.size() != 2 ||
         (strCommand != "onetry" && strCommand != "add" && strCommand != "remove"))
-        throw std::runtime_error(
+        throw runtime_error(
             "addnode \"node\" \"add|remove|onetry\"\n"
             "\nAttempts add or remove a node from the addnode list.\n"
             "Or try a connection to a node once.\n"
@@ -181,9 +183,9 @@ UniValue addnode(const UniValue& params, bool fHelp)
             "2. \"command\"  (string, required) 'add' to add a node to the list, 'remove' to remove a node from the list, 'onetry' to try a connection to the node once\n"
 
             "\nExamples:\n" +
-            HelpExampleCli("addnode", "\"192.168.0.6:51472\" \"onetry\"") + HelpExampleRpc("addnode", "\"192.168.0.6:51472\", \"onetry\""));
+            HelpExampleCli("addnode", "\"192.168.0.6:14815\" \"onetry\"") + HelpExampleRpc("addnode", "\"192.168.0.6:14815\", \"onetry\""));
 
-    std::string strNode = params[0].get_str();
+    string strNode = params[0].get_str();
 
     if (strCommand == "onetry") {
         CAddress addr;
@@ -192,7 +194,7 @@ UniValue addnode(const UniValue& params, bool fHelp)
     }
 
     LOCK(cs_vAddedNodes);
-    std::vector<std::string>::iterator it = vAddedNodes.begin();
+    vector<string>::iterator it = vAddedNodes.begin();
     for (; it != vAddedNodes.end(); it++)
         if (strNode == *it)
             break;
@@ -213,7 +215,7 @@ UniValue addnode(const UniValue& params, bool fHelp)
 UniValue disconnectnode(const UniValue& params, bool fHelp)
 {
     if (fHelp || params.size() != 1)
-        throw std::runtime_error(
+        throw runtime_error(
             "disconnectnode \"node\" \n"
             "\nImmediately disconnects from the specified node.\n"
 
@@ -237,7 +239,7 @@ UniValue disconnectnode(const UniValue& params, bool fHelp)
 UniValue getaddednodeinfo(const UniValue& params, bool fHelp)
 {
     if (fHelp || params.size() < 1 || params.size() > 2)
-        throw std::runtime_error(
+        throw runtime_error(
             "getaddednodeinfo dns ( \"node\" )\n"
             "\nReturns information about the given added node, or all added nodes\n"
             "(note that onetry addnodes are not listed here)\n"
@@ -255,7 +257,7 @@ UniValue getaddednodeinfo(const UniValue& params, bool fHelp)
             "    \"connected\" : true|false,          (boolean) If connected\n"
             "    \"addresses\" : [\n"
             "       {\n"
-            "         \"address\" : \"192.168.0.201:51472\",  (string) The pivx server host and port\n"
+            "         \"address\" : \"192.168.0.201:14815\",  (string) The xchainz server host and port\n"
             "         \"connected\" : \"outbound\"           (string) connection, inbound or outbound\n"
             "       }\n"
             "       ,...\n"
@@ -269,15 +271,15 @@ UniValue getaddednodeinfo(const UniValue& params, bool fHelp)
 
     bool fDns = params[0].get_bool();
 
-    std::list<std::string> laddedNodes(0);
+    list<string> laddedNodes(0);
     if (params.size() == 1) {
         LOCK(cs_vAddedNodes);
-        for (std::string& strAddNode : vAddedNodes)
+        for (string& strAddNode : vAddedNodes)
             laddedNodes.push_back(strAddNode);
     } else {
-        std::string strNode = params[1].get_str();
+        string strNode = params[1].get_str();
         LOCK(cs_vAddedNodes);
-        for (std::string& strAddNode : vAddedNodes)
+        for (string& strAddNode : vAddedNodes)
             if (strAddNode == strNode) {
                 laddedNodes.push_back(strAddNode);
                 break;
@@ -288,7 +290,7 @@ UniValue getaddednodeinfo(const UniValue& params, bool fHelp)
 
     UniValue ret(UniValue::VARR);
     if (!fDns) {
-        for (std::string& strAddNode : laddedNodes) {
+        for (string& strAddNode : laddedNodes) {
             UniValue obj(UniValue::VOBJ);
             obj.push_back(Pair("addednode", strAddNode));
             ret.push_back(obj);
@@ -296,11 +298,11 @@ UniValue getaddednodeinfo(const UniValue& params, bool fHelp)
         return ret;
     }
 
-    std::list<std::pair<std::string, std::vector<CService> > > laddedAddreses(0);
-    for (std::string& strAddNode : laddedNodes) {
-        std::vector<CService> vservNode(0);
+    list<pair<string, vector<CService> > > laddedAddreses(0);
+    for (string& strAddNode : laddedNodes) {
+        vector<CService> vservNode(0);
         if (Lookup(strAddNode.c_str(), vservNode, Params().GetDefaultPort(), fNameLookup, 0))
-            laddedAddreses.push_back(std::make_pair(strAddNode, vservNode));
+            laddedAddreses.push_back(make_pair(strAddNode, vservNode));
         else {
             UniValue obj(UniValue::VOBJ);
             obj.push_back(Pair("addednode", strAddNode));
@@ -311,7 +313,7 @@ UniValue getaddednodeinfo(const UniValue& params, bool fHelp)
     }
 
     LOCK(cs_vNodes);
-    for (std::list<std::pair<std::string, std::vector<CService> > >::iterator it = laddedAddreses.begin(); it != laddedAddreses.end(); it++) {
+    for (list<pair<string, vector<CService> > >::iterator it = laddedAddreses.begin(); it != laddedAddreses.end(); it++) {
         UniValue obj(UniValue::VOBJ);
         obj.push_back(Pair("addednode", it->first));
 
@@ -343,7 +345,7 @@ UniValue getaddednodeinfo(const UniValue& params, bool fHelp)
 UniValue getnettotals(const UniValue& params, bool fHelp)
 {
     if (fHelp || params.size() > 0)
-        throw std::runtime_error(
+        throw runtime_error(
             "getnettotals\n"
             "\nReturns information about network traffic, including bytes in, bytes out,\n"
             "and current time.\n"
@@ -378,7 +380,7 @@ static UniValue GetNetworksInfo()
         obj.push_back(Pair("name", GetNetworkName(network)));
         obj.push_back(Pair("limited", IsLimited(network)));
         obj.push_back(Pair("reachable", IsReachable(network)));
-        obj.push_back(Pair("proxy", proxy.IsValid() ? proxy.proxy.ToStringIPPort() : std::string()));
+        obj.push_back(Pair("proxy", proxy.IsValid() ? proxy.proxy.ToStringIPPort() : string()));
         obj.push_back(Pair("proxy_randomize_credentials", proxy.randomize_credentials));
         networks.push_back(obj);
     }
@@ -388,14 +390,14 @@ static UniValue GetNetworksInfo()
 UniValue getnetworkinfo(const UniValue& params, bool fHelp)
 {
     if (fHelp || params.size() != 0)
-        throw std::runtime_error(
+        throw runtime_error(
             "getnetworkinfo\n"
             "\nReturns an object containing various state info regarding P2P networking.\n"
 
             "\nResult:\n"
             "{\n"
             "  \"version\": xxxxx,                      (numeric) the server version\n"
-            "  \"subversion\": \"/Pivx Core:x.x.x.x/\",     (string) the server subversion string\n"
+            "  \"subversion\": \"/XChainZ:x.x.x.x/\",     (string) the server subversion string\n"
             "  \"protocolversion\": xxxxx,              (numeric) the protocol version\n"
             "  \"localservices\": \"xxxxxxxxxxxxxxxx\", (string) the services we offer to the network\n"
             "  \"timeoffset\": xxxxx,                   (numeric) the time offset\n"
@@ -409,7 +411,7 @@ UniValue getnetworkinfo(const UniValue& params, bool fHelp)
             "  }\n"
             "  ,...\n"
             "  ],\n"
-            "  \"relayfee\": x.xxxxxxxx,                (numeric) minimum relay fee for non-free transactions in pivx/kb\n"
+            "  \"relayfee\": x.xxxxxxxx,                (numeric) minimum relay fee for non-free transactions in xchainz/kb\n"
             "  \"localaddresses\": [                    (array) list of local addresses\n"
             "  {\n"
             "    \"address\": \"xxxx\",                 (string) network address\n"
@@ -451,12 +453,12 @@ UniValue getnetworkinfo(const UniValue& params, bool fHelp)
 
 UniValue setban(const UniValue& params, bool fHelp)
 {
-    std::string strCommand;
+    string strCommand;
     if (params.size() >= 2)
         strCommand = params[1].get_str();
     if (fHelp || params.size() < 2 ||
         (strCommand != "add" && strCommand != "remove"))
-        throw std::runtime_error(
+        throw runtime_error(
             "setban \"ip(/netmask)\" \"add|remove\" (bantime) (absolute)\n"
             "\nAttempts add or remove a IP/Subnet from the banned list.\n"
 
@@ -475,7 +477,7 @@ UniValue setban(const UniValue& params, bool fHelp)
     CNetAddr netAddr;
     bool isSubnet = false;
 
-    if (params[0].get_str().find("/") != std::string::npos)
+    if (params[0].get_str().find("/") != string::npos)
         isSubnet = true;
 
     if (!isSubnet)
@@ -520,7 +522,7 @@ UniValue setban(const UniValue& params, bool fHelp)
 UniValue listbanned(const UniValue& params, bool fHelp)
 {
     if (fHelp || params.size() != 0)
-        throw std::runtime_error(
+        throw runtime_error(
             "listbanned\n"
             "\nList all banned IPs/Subnets.\n"
 
@@ -561,7 +563,7 @@ UniValue listbanned(const UniValue& params, bool fHelp)
 UniValue clearbanned(const UniValue& params, bool fHelp)
 {
     if (fHelp || params.size() != 0)
-        throw std::runtime_error(
+        throw runtime_error(
             "clearbanned\n"
             "\nClear all banned IPs.\n"
 

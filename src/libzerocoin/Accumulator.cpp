@@ -10,6 +10,7 @@
  * @license    This project is released under the MIT license.
  **/
 // Copyright (c) 2017-2019 The PIVX developers
+// Copyright (c) 2019 The XChainZ developers
 
 #include <sstream>
 #include <iostream>
@@ -83,9 +84,9 @@ void Accumulator::setValue(CBigNum bnValue) {
     this->value = bnValue;
 }
 
-void Accumulator::setInitialValue() {
-    this->value = this->params->accumulatorBase;
-}
+//void Accumulator::setInitialValue() {
+//    this->value = this->params->accumulatorBase;
+//}
 
 Accumulator& Accumulator::operator += (const PublicCoin& c) {
     this->accumulate(c);

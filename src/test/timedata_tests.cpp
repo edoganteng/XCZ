@@ -3,10 +3,11 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "timedata.h"
-#include "test/test_pivx.h"
+#include "test/test_xchainz.h"
 
 #include <boost/test/unit_test.hpp>
 
+using namespace std;
 
 BOOST_FIXTURE_TEST_SUITE(timedata_tests, BasicTestingSetup)
 

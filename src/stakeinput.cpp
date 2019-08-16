@@ -1,15 +1,16 @@
 // Copyright (c) 2017-2019 The PIVX developers
+// Copyright (c) 2019 The XChainZ developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "zpiv/accumulators.h"
+#include "zxcz/accumulators.h"
 #include "chain.h"
-#include "zpiv/deterministicmint.h"
+#include "zxcz/deterministicmint.h"
 #include "main.h"
 #include "stakeinput.h"
 #include "wallet/wallet.h"
 
-CZPivStake::CZPivStake(const libzerocoin::CoinSpend& spend)
+CZXczStake::CZXczStake(const libzerocoin::CoinSpend& spend)
 {
     this->nChecksum = spend.getAccumulatorChecksum();
     this->denom = spend.getDenomination();
@@ -19,7 +20,7 @@ CZPivStake::CZPivStake(const libzerocoin::CoinSpend& spend)
     fMint = false;
 }
 
-int CZPivStake::GetChecksumHeightFromMint()
+int CZXczStake::GetChecksumHeightFromMint()
 {
     int nHeightChecksum = chainActive.Height() - Params().Zerocoin_RequiredStakeDepth();
 
@@ -30,20 +31,20 @@ int CZPivStake::GetChecksumHeightFromMint()
     return GetChecksumHeight(nChecksum, denom);
 }
 
-int CZPivStake::GetChecksumHeightFromSpend()
+int CZXczStake::GetChecksumHeightFromSpend()
 {
     return GetChecksumHeight(nChecksum, denom);
 }
 
-uint32_t CZPivStake::GetChecksum()
+uint32_t CZXczStake::GetChecksum()
 {
     return nChecksum;
 }
 
-// The zPIV block index is the first appearance of the accumulator checksum that was used in the spend
+// The zXCZ block index is the first appearance of the accumulator checksum that was used in the spend
 // note that this also means when staking that this checksum should be from a block that is beyond 60 minutes old and
 // 100 blocks deep.
-CBlockIndex* CZPivStake::GetIndexFrom()
+CBlockIndex* CZXczStake::GetIndexFrom()
 {
     if (pindexFrom)
         return pindexFrom;
@@ -55,7 +56,7 @@ CBlockIndex* CZPivStake::GetIndexFrom()
     else
         nHeightChecksum = GetChecksumHeightFromSpend();
 
-    if (nHeightChecksum < Params().Zerocoin_StartHeight() || nHeightChecksum > chainActive.Height()) {
+    if (nHeightChecksum > chainActive.Height()) {
         pindexFrom = nullptr;
     } else {
         //note that this will be a nullptr if the height DNE
@@ -65,14 +66,14 @@ CBlockIndex* CZPivStake::GetIndexFrom()
     return pindexFrom;
 }
 
-CAmount CZPivStake::GetValue()
+CAmount CZXczStake::GetValue()
 {
     return denom * COIN;
 }
 
 //Use the first accumulator checkpoint that occurs 60 minutes after the block being staked from
 // In case of regtest, next accumulator of 60 blocks after the block being staked from
-bool CZPivStake::GetModifier(uint64_t& nStakeModifier)
+bool CZXczStake::GetModifier(uint64_t& nStakeModifier)
 {
     CBlockIndex* pindex = GetIndexFrom();
     if (!pindex)
@@ -98,15 +99,15 @@ bool CZPivStake::GetModifier(uint64_t& nStakeModifier)
     }
 }
 
-CDataStream CZPivStake::GetUniqueness()
+CDataStream CZXczStake::GetUniqueness()
 {
-    //The unique identifier for a zPIV is a hash of the serial
+    //The unique identifier for a zXCZ is a hash of the serial
     CDataStream ss(SER_GETHASH, 0);
     ss << hashSerial;
     return ss;
 }
 
-bool CZPivStake::CreateTxIn(CWallet* pwallet, CTxIn& txIn, uint256 hashTxOut)
+bool CZXczStake::CreateTxIn(CWallet* pwallet, CTxIn& txIn, uint256 hashTxOut)
 {
     CBlockIndex* pindexCheckpoint = GetIndexFrom();
     if (!pindexCheckpoint)
@@ -126,25 +127,25 @@ bool CZPivStake::CreateTxIn(CWallet* pwallet, CTxIn& txIn, uint256 hashTxOut)
     return true;
 }
 
-bool CZPivStake::CreateTxOuts(CWallet* pwallet, std::vector<CTxOut>& vout, CAmount nTotal)
+bool CZXczStake::CreateTxOuts(CWallet* pwallet, vector<CTxOut>& vout, CAmount nTotal)
 {
-    //Create an output returning the zPIV that was staked
+    //Create an output returning the zXCZ that was staked
     CTxOut outReward;
     libzerocoin::CoinDenomination denomStaked = libzerocoin::AmountToZerocoinDenomination(this->GetValue());
     CDeterministicMint dMint;
-    if (!pwallet->CreateZPIVOutPut(denomStaked, outReward, dMint))
-        return error("%s: failed to create zPIV output", __func__);
+    if (!pwallet->CreateZXCZOutPut(denomStaked, outReward, dMint))
+        return error("%s: failed to create zXCZ output", __func__);
     vout.emplace_back(outReward);
 
     //Add new staked denom to our wallet
     if (!pwallet->DatabaseMint(dMint))
-        return error("%s: failed to database the staked zPIV", __func__);
+        return error("%s: failed to database the staked zXCZ", __func__);
 
     for (unsigned int i = 0; i < 3; i++) {
         CTxOut out;
         CDeterministicMint dMintReward;
-        if (!pwallet->CreateZPIVOutPut(libzerocoin::CoinDenomination::ZQ_ONE, out, dMintReward))
-            return error("%s: failed to create zPIV output", __func__);
+        if (!pwallet->CreateZXCZOutPut(libzerocoin::CoinDenomination::ZQ_ONE, out, dMintReward))
+            return error("%s: failed to create zXCZ output", __func__);
         vout.emplace_back(out);
 
         if (!pwallet->DatabaseMint(dMintReward))
@@ -154,50 +155,50 @@ bool CZPivStake::CreateTxOuts(CWallet* pwallet, std::vector<CTxOut>& vout, CAmou
     return true;
 }
 
-bool CZPivStake::GetTxFrom(CTransaction& tx)
+bool CZXczStake::GetTxFrom(CTransaction& tx)
 {
     return false;
 }
 
-bool CZPivStake::MarkSpent(CWallet *pwallet, const uint256& txid)
+bool CZXczStake::MarkSpent(CWallet *pwallet, const uint256& txid)
 {
-    CzPIVTracker* zpivTracker = pwallet->zpivTracker.get();
+    CzXCZTracker* zxczTracker = pwallet->zxczTracker.get();
     CMintMeta meta;
-    if (!zpivTracker->GetMetaFromStakeHash(hashSerial, meta))
+    if (!zxczTracker->GetMetaFromStakeHash(hashSerial, meta))
         return error("%s: tracker does not have serialhash", __func__);
 
-    zpivTracker->SetPubcoinUsed(meta.hashPubcoin, txid);
+    zxczTracker->SetPubcoinUsed(meta.hashPubcoin, txid);
     return true;
 }
 
-//!PIV Stake
-bool CPivStake::SetInput(CTransaction txPrev, unsigned int n)
+//!XCZ Stake
+bool CXczStake::SetInput(CTransaction txPrev, unsigned int n)
 {
     this->txFrom = txPrev;
     this->nPosition = n;
     return true;
 }
 
-bool CPivStake::GetTxFrom(CTransaction& tx)
+bool CXczStake::GetTxFrom(CTransaction& tx)
 {
     tx = txFrom;
     return true;
 }
 
-bool CPivStake::CreateTxIn(CWallet* pwallet, CTxIn& txIn, uint256 hashTxOut)
+bool CXczStake::CreateTxIn(CWallet* pwallet, CTxIn& txIn, uint256 hashTxOut)
 {
     txIn = CTxIn(txFrom.GetHash(), nPosition);
     return true;
 }
 
-CAmount CPivStake::GetValue()
+CAmount CXczStake::GetValue()
 {
     return txFrom.vout[nPosition].nValue;
 }
 
-bool CPivStake::CreateTxOuts(CWallet* pwallet, std::vector<CTxOut>& vout, CAmount nTotal)
+bool CXczStake::CreateTxOuts(CWallet* pwallet, vector<CTxOut>& vout, CAmount nTotal)
 {
-    std::vector<valtype> vSolutions;
+    vector<valtype> vSolutions;
     txnouttype whichType;
     CScript scriptPubKeyKernel = txFrom.vout[nPosition].scriptPubKey;
     if (!Solver(scriptPubKeyKernel, whichType, vSolutions)) {
@@ -230,7 +231,7 @@ bool CPivStake::CreateTxOuts(CWallet* pwallet, std::vector<CTxOut>& vout, CAmoun
     return true;
 }
 
-bool CPivStake::GetModifier(uint64_t& nStakeModifier)
+bool CXczStake::GetModifier(uint64_t& nStakeModifier)
 {
     int nStakeModifierHeight = 0;
     int64_t nStakeModifierTime = 0;
@@ -244,16 +245,16 @@ bool CPivStake::GetModifier(uint64_t& nStakeModifier)
     return true;
 }
 
-CDataStream CPivStake::GetUniqueness()
+CDataStream CXczStake::GetUniqueness()
 {
-    //The unique identifier for a PIV stake is the outpoint
+    //The unique identifier for a XCZ stake is the outpoint
     CDataStream ss(SER_NETWORK, 0);
     ss << nPosition << txFrom.GetHash();
     return ss;
 }
 
 //The block that the UTXO was added to the chain
-CBlockIndex* CPivStake::GetIndexFrom()
+CBlockIndex* CXczStake::GetIndexFrom()
 {
     uint256 hashBlock = 0;
     CTransaction tx;

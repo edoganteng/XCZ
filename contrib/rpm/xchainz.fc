@@ -1,0 +1,8 @@
+/usr/bin/xchainz-cli		--	gen_context(system_u:object_r:xchainz_exec_t,s0)
+/usr/sbin/xchainzd		--	gen_context(system_u:object_r:xchainz_exec_t,s0)
+/usr/lib(64)?/xchainz/xchainzd		--	gen_context(system_u:object_r:xchainz_exec_t,s0)
+
+/etc/xchainz(/.*)?		gen_context(system_u:object_r:xchainz_conf_t,s0)
+/var/lib/xchainz(/.*)?		gen_context(system_u:object_r:xchainz_var_lib_t,s0)
+
+(/var)?/run/xchainzd(/.*)?   gen_context(system_u:object_r:xchainz_var_run_t,s0)
