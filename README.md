@@ -19,7 +19,7 @@
 
 <table>
 <th>Block Height</th><th>Reward</th>
-<tr><td>1-200</td><td>1,05,000 XCZ</td></tr>
+<tr><td>1-200</td><td>105,000 XCZ</td></tr>
 </table>
 
 ### PoS Rewards Distribution
